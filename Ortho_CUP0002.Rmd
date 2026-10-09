@@ -1,0 +1,122 @@
+---
+title: "Orthotopic Model CUP0002"
+author: "Leyla Azarang and Renee Menezes" 
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    code_folding: hide
+    toc: true
+    toc_float: true
+    toc_collapsed: true
+  toc_depth: 3  
+---
+
+
+## Analysing data from one model
+
+```{r}
+library(survival)
+library(survminer)
+library(tidyverse)
+library(JM)
+```
+
+### Read in data
+
+First read in information about centres available for this model.
+
+```{r}
+# This is to analyse file xi-th, corresponding to myfile
+xi <- 4 # later on for loop 1:4
+alldata <- readxl::read_excel("./data/overview1.xlsx")
+myfile <- alldata$FileName[xi]
+mymodel <- strsplit(myfile, split = " ")[[1]][ 1 ]
+all.sheets <- as.character(alldata[xi, -1])
+names(all.sheets) <- colnames(alldata)[ -1 ] 
+all.sheets <- all.sheets[ !is.na(all.sheets) ]
+list.centers <- names(all.sheets)
+```
+
+The data here is for model `r mymodel`. It was analysed by the following centers:
+
+```{r}
+knitr::kable(list.centers, col.names = "Centers")
+```
+
+```{r eval = FALSE}
+# If I work with separate variables
+sh.nki <- all.sheets[ grep("NKI", all.sheets) ]
+sh.vhio <- all.sheets[ grep("VHIO", all.sheets) ]
+sh.rug <- all.sheets[ grep("RUG", all.sheets) ]
+sh.unito <- all.sheets[ grep("UNITO", all.sheets) ]
+sh.ic <- all.sheets[ grep("IC", all.sheets) ]
+sh.leuven <- all.sheets[ grep("KULEUVEN", all.sheets) ]
+sh.ucam <- all.sheets[ grep("UCAM", all.sheets) ]
+sh.oslo <- all.sheets[ grep("Oslo", all.sheets) ]
+sh.rcsi <- all.sheets[ grep("RCSI", all.sheets) ]
+
+```
+
+
+
+
+```{r echo = FALSE, eval = FALSE}
+mymodel # name of the model
+
+all.sheets # names of the sheets to be used
+list.centers # names of the centers available
+```
+
+#### Analysis per center
+
+```{r}
+n_center <- length(list.centers)
+
+## For now the first argument of lapply is 1, becuase of inconsistency of the data, after having consistent data it will be equal to 1:n_centers
+
+data_centers <- lapply(list(1),
+function(x){
+   tb= readxl::read_excel(paste("data/", myfile, sep = ""), 
+                          col_names=TRUE, sheet = all.sheets[x])%>%
+         filter(Label != "Waste") %>%
+         select(-Label, -`Start Info`, -`End Info`, - date)%>%
+         select(
+            where(
+             ~!all(is.na(.x))
+                 )
+                )  
+  return(tb)}
+  )
+
+``` 
+VHIO = data_centers[[1]]
+
+VHIO$Group[1]
+
+VHIO$Treatment
+VHIO$`event /status`
+# the event for each mouse should be specified. I just put one for the first mouse, to include this column in the tibble. 
+
+VHIO_long <- VHIO %>%
+gather(key= "time", value="tumor size", -`Genealogy ID`, -Barcode, -Group,  -Treatment, -`follow up time`, -`event /status`) %>%
+  arrange(`Genealogy ID`)
+
+
+
+
+VHIO_long$time <- as.numeric(VHIO_long$time) - as.numeric(VHIO_long$time[1])
+
+
+
+VHIO_long <- VHIO_long%>%
+  mutate(`tumor size`=as.numeric(`tumor size`)) %>%
+  mutate(time = as.numeric(time))%>%
+  filter(`tumor size` !=-1)
+
+range(VHIO_long$`tumor size`)
+```
+
+
+
+
+
