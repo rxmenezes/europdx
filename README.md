@@ -14,4 +14,4 @@ Code for generating dynamic reports for analysis of CRC models are included. The
 
 > CUP0009 -> CRC0065
 
-The code for a dynamic report for one breast cancer model, not mentioned in the referred publication, is also included.
+The code for a dynamic report for breast cancer models, not mentioned in the referred publication, is also included.
